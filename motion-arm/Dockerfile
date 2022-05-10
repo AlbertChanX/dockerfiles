@@ -2,16 +2,20 @@
 # Dockerfile for motion-arm
 #
 
-FROM resin/rpi-raspbian:jessie
+FROM debian:buster
 MAINTAINER EasyPi Software Foundation
 
-ENV MOTION_VERSION 4.1.1
-ENV MOTION_FILE pi_jessie_motion_${MOTION_VERSION}-1_armhf.deb
-ENV MOTION_URL https://github.com/Motion-Project/motion/releases/download/release-${MOTION_VERSION}/${MOTION_FILE}
+ENV MOTION_VERSION=4.4.0
+ENV MOTION_FILE=pi_buster_motion_${MOTION_VERSION}-1_armhf.deb
+ENV MOTION_URL=https://github.com/Motion-Project/motion/releases/download/release-${MOTION_VERSION}/${MOTION_FILE}
 
 RUN set -xe \
     && apt-get update \
-    && apt-get install -y curl libraspberrypi0 mosquitto-clients \
+    && apt-get install -y curl gnupg mosquitto-clients openssh-client \
+    && echo "deb http://archive.raspberrypi.org/debian/ buster main" > /etc/apt/sources.list.d/raspi.list \
+    && curl -sSL "http://archive.raspberrypi.org/debian/raspberrypi.gpg.key" | apt-key add - \
+    && apt-get update \
+    && apt-get install -y libraspberrypi0 \
     && curl -sSL ${MOTION_URL} -o ${MOTION_FILE} \
     && (dpkg -i ${MOTION_FILE} || apt-get -f install -y) \
     && sed -i -e 's/^daemon on/daemon off/' \

@@ -1,46 +1,38 @@
-version: '2'
+version: "3.8"
 
 services:
-  drone-server:
-    image: quay.io/armswarm/drone:0.8
-    ports:
-      -  "8000:8000"
-      -  "9000:9000"
-    volumes:
-      - ./data/drone:/var/lib/drone
-    environment:
-      - DRONE_OPEN=true
-      - DRONE_HOST=https://drone.easypi.pro
-      - DRONE_DATABASE_DRIVER=mysql
-      - DRONE_DATABASE_DATASOURCE=root:root@tcp(mariadb:3306)/drone?parseTime=true
-      - DRONE_GOGS=true
-      - DRONE_GOGS_URL=https://gogs.easypi.pro
-      - DRONE_SECRET=0123456789
-      - DRONE_ADMIN=root
-    depends_on:
-      - mariadb
-      - gogs
-    restart: always
 
-  drone-agent:
-    image: drone/agent:linux-arm
+  drone:
+    image: drone/drone:1.10-linux-arm
+    ports:
+      -  "8080:80"
+    volumes:
+      - ./data/drone:/data
+    environment:
+      - DRONE_SERVER_HOST=drone
+      - DRONE_SERVER_PROTO=http
+      - DRONE_RPC_SECRET=secret
+      - DRONE_DATABASE_DRIVER=sqlite3
+      - DRONE_DATABASE_DATASOURCE=/data/database.sqlite
+      - DRONE_GOGS_SERVER=http://gogs:3000
+      - DRONE_AGENTS_ENABLED=true
+    depends_on:
+      - gogs
+    restart: unless-stopped
+
+  agent:
+    image: drone/agent:1.10-linux-arm
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - DRONE_SERVER=drone-server:9000
-      - DRONE_SECRET=0123456789
+      - DRONE_RPC_PROTO=http
+      - DRONE_RPC_HOST=drone
+      - DRONE_RPC_SECRET=secret
+      - DRONE_RUNNER_NAME=agent
+      - DRONE_RUNNER_CAPACITY=2
     depends_on:
-      - drone-server
-    restart: always
-
-  mariadb:
-    image: easypi/mariadb-arm
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=drone
-    restart: always
+      - drone
+    restart: unless-stopped
 
   gogs:
     image: easypi/gogs-arm
@@ -49,13 +41,4 @@ services:
       - "3000:3000"
     volumes:
       - ./data/gogs:/data
-    restart: always
-
-  phpmyadmin:
-    image: easypi/phpmyadmin-arm
-    ports:
-      - "8080:80"
-    environment:
-      - PMA_HOST=mariadb
-      - PMA_PORT=3306
-    restart: always
+    restart: unless-stopped

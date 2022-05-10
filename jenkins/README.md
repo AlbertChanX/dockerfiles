@@ -40,4 +40,15 @@ $ docker-compose exec --user root jenkins apk add -U git
 $ firefox http://localhost:8080/
 ```
 
+## fix slow network
+
+```
+$ vim data/war/jsbundles/pluginSetupWizard.js
+    // default 10 seconds for AJAX responses to return before triggering an error condition
+    var pluginManagerErrorTimeoutMillis = 10 * 1000;
+```
+
+> Chinese users may add `-Dhudson.model.DownloadService.noSignatureCheck=true` option to use [plugin update mirror site][2].
+
 [1]: https://jenkins.io/index.html
+[2]: https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/current/update-center.json

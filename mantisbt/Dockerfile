@@ -2,22 +2,22 @@
 # Dockerfile for mantisbt
 #
 
-FROM php:5.6-apache
-MAINTAINER kev <noreply@easypi.pro>
+FROM php:7.2-apache
+MAINTAINER EasyPi Software Foundation
 
 RUN a2enmod rewrite
 
 RUN set -xe \
     && apt-get update \
-    && apt-get install -y libpng-dev libjpeg-dev libpq-dev libxml2-dev \
-    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+    && apt-get install -y libfreetype6-dev libpng-dev libjpeg-dev libpq-dev libxml2-dev \
+    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr --with-freetype-dir=/usr \
     && docker-php-ext-install gd mbstring mysql mysqli pgsql soap \
     && rm -rf /var/lib/apt/lists/*
 
-ENV MANTIS_VER 2.18.0
-ENV MANTIS_MD5 b5dd73622daeb92594d014dcad75a1d1
-ENV MANTIS_URL https://sourceforge.net/projects/mantisbt/files/mantis-stable/${MANTIS_VER}/mantisbt-${MANTIS_VER}.tar.gz
-ENV MANTIS_FILE mantisbt.tar.gz
+ENV MANTIS_VERSION=2.25.0
+ENV MANTIS_MD5=a3e4b5c4f91b5d04c37122650cb1189d
+ENV MANTIS_URL=https://sourceforge.net/projects/mantisbt/files/mantis-stable/${MANTIS_VERSION}/mantisbt-${MANTIS_VERSION}.tar.gz
+ENV MANTIS_FILE=mantisbt.tar.gz
 
 RUN set -xe \
     && curl -fSL ${MANTIS_URL} -o ${MANTIS_FILE} \

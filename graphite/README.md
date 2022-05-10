@@ -7,43 +7,53 @@ graphite
 - Chew bubblegum.
 - Make it easy to store and graph metrics.
 
+![](https://github.com/graphite-project/graphite-web/raw/master/webapp/content/img/overview.png)
+
 ## docker-compose.yml
 
 ```yaml
-graphite:
-  image: vimagick/graphite
-  ports:
-    - "2003:2003"
-    - "2003:2003/udp"
-    - "2004:2004"
-    - "2023:2023"
-    - "2024:2024"
-    - "7002:7002"
-    - "8080:8080"
-    - "9001:9001"
-  volumes:
-    - ./data/conf:/opt/graphite/conf
-    - ./data/storage:/opt/graphite/storage
-  restart: always
+version: "3.8"
+services:
+  graphite:
+    image: vimagick/graphite
+    ports:
+      - "2003:2003/udp"
+      - "2003:2003"
+      - "2004:2004"
+      - "2023:2023"
+      - "2024:2024"
+      - "7002:7002"
+      - "8080:8080"
+      - "9001:9001"
+    volumes:
+      - ./data/conf:/opt/graphite/conf
+      - ./data/storage:/opt/graphite/storage
+      - ./data/storage/log/webapp:/opt/graphite/storage/log/webapp
+    restart: unless-stopped
 ```
 
 ## Up and Running
 
 ```bash
 $ cd ~/fig/graphite
-$ mkdir -p data/storage/log/webapp
+
+$ docker-compose run --rm graphite sh
+>>> django-admin migrate --noinput --run-syncdb
+>>> django-admin createsuperuser
+>>> django-admin changepassword
+>>> exit
+
 $ docker-compose up -d
+
 $ docker-compose exec graphite sh
 >>> vi conf/storage-schemas.conf
->>> python webapp/manage.py migrate --noinput --run-syncdb
->>> python webapp/manage.py createsuperuser
->>> python webapp/manage.py changepassword
->>> supervisorctl restart
+>>> supervisorctl restart all
 >>> supervisorctl status
 carbon-aggregator   RUNNING   pid 9, uptime 0:00:13
 carbon-cache        RUNNING   pid 8, uptime 0:00:22
 graphite-webapp     RUNNING   pid 7, uptime 0:00:24
 >>> exit
+
 $ tree -F -L 4
 ├── data/
 │   ├── conf/
@@ -52,6 +62,7 @@ $ tree -F -L 4
 │   │   ├── rewrite-rules.conf
 │   │   └── storage-schemas.conf
 │   └── storage/
+│       ├── carbon-aggregator-a.pid
 │       ├── carbon-cache-a.pid
 │       ├── graphite.db
 │       ├── log/
@@ -59,8 +70,12 @@ $ tree -F -L 4
 │       └── whisper/
 │           └── carbon/
 └── docker-compose.yml
+
 $ curl http://localhost:8080
 ```
+
+> :warning: Stale pid files may prevent services from starting.
+> Please delete these pid files manually before restarting or upgrading container.
 
 ## storage-schemas.conf
 

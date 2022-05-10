@@ -1,6 +1,8 @@
 OpenRefine
 ==========
 
+> ⚠️ THIS PROJECT WAS MOVED TO: https://github.com/EasyPi/docker-openrefine
+
 ![](https://badge.imagelayers.io/vimagick/openrefine:latest.svg)
 
 [OpenRefine][1] (formerly Google Refine) is a powerful tool for working with messy
@@ -12,13 +14,15 @@ Please read the [wiki][2] to learn more.
 ### docker-compose.yml
 
 ```yaml
-openrefine:
-  image: vimagick/openrefine
-  ports:
-    - "3333:3333"
-  volumes:
-    - ./data:/data
-  restart: always
+version: "3.8"
+services:
+  openrefine:
+    image: vimagick/openrefine
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
 ```
 
 [1]: http://openrefine.org/index.html

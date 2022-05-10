@@ -2,11 +2,12 @@
 # Dockerfile for frp
 #
 
-FROM alpine
-MAINTAINER kev <noreply@easypi.pro>
+FROM alpine:3
+MAINTAINER EasyPi Software Foundation
 
-ENV FRP_VERSION 0.21.0
-ENV FRP_URL https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/frp_${FRP_VERSION}_linux_amd64.tar.gz
+ENV FRP_VERSION=0.38.0
+ENV FRP_FILE=frp_${FRP_VERSION}_linux_amd64.tar.gz
+ENV FRP_URL=https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/${FRP_FILE}
 
 WORKDIR /opt/frp
 

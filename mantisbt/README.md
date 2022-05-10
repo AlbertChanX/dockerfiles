@@ -1,25 +1,34 @@
-`MantisBT` is an open source issue tracker that provides
+mantisbt
+========
+
+[MantisBT][1] is an open source issue tracker that provides
 a delicate balance between simplicity and power.
 
 ## docker-compose.yml
 
-```
-mantisbt:
-  image: vimagick/mantisbt:latest
-  ports:
-    - "8989:80"
-  links:
-    - mysql
-  restart: always
+```yaml
+version: "3.8"
 
-mysql:
-  image: mysql:latest
-  environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_DATABASE=bugtracker
-    - MYSQL_USER=mantisbt
-    - MYSQL_PASSWORD=mantisbt
-  restart: always
+services:
+
+  mantisbt:
+    image: vimagick/mantisbt
+    ports:
+      - "8989:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+  mysql:
+    image: mysql
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=bugtracker
+      - MYSQL_USER=mantis
+      - MYSQL_PASSWORD=mantis
+    restart: unless-stopped
 ```
 
 > You can use `mariadb`/`postgres` instead of `mysql`.
@@ -65,3 +74,4 @@ $g_smtp_username = 'mantisbt';
 $g_smtp_password = '********';
 ```
 
+[1]: https://www.mantisbt.org/index.php

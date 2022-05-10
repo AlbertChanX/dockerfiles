@@ -6,16 +6,18 @@ or firewall to the internet. Now, it supports tcp, udp, http and https protocol
 when requests can be forwarded by domains to backward web services.
 
 ```yaml
-frps:
-  image: vimagick/frp
-  ports:
-    - "7000:7000/tcp"
-    - "7000:7000/udp"
-    - "7500:7500/tcp"
-    - "127.0.0.1:20000-20099:20000-20099/tcp"
-  volumes:
-    - ./data/frps.ini:/opt/frp/frps.ini
-  restart: always
+version: "3.8"
+services:
+  frps:
+    image: vimagick/frp
+    volumes:
+      - ./data/frps.ini:/opt/frp/frps.ini
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-u", "admin:admin", "http://127.0.0.1:7500/healthz"]
+      interval: 1m
+      timeout: 5s
+    network_mode: host
+    restart: unless-stopped
 ```
 
 Sample config file: [frps.ini][2]

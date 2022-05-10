@@ -1,17 +1,17 @@
 #
-# Dockerfile for dante-server
+# Dockerfile for dante
 #
 
-FROM debian:jessie
-MAINTAINER kev <noreply@easypi.pro>
+FROM debian:bullseye
+MAINTAINER EasyPi Software Foundation
 
 
-ENV DANTE_VER 1.4.2
-ENV DANTE_URL https://www.inet.no/dante/files/dante-$DANTE_VER.tar.gz
-ENV DANTE_SHA 4c97cff23e5c9b00ca1ec8a95ab22972813921d7fbf60fc453e3e06382fc38a7
-ENV DANTE_FILE dante.tar.gz
-ENV DANTE_TEMP dante
-ENV DANTE_DEPS build-essential curl
+ENV DANTE_VER=1.4.3
+ENV DANTE_URL=https://www.inet.no/dante/files/dante-$DANTE_VER.tar.gz
+ENV DANTE_SHA1=1e264ec532774324b5508ba5f2ad226d479b4977
+ENV DANTE_FILE=dante.tar.gz
+ENV DANTE_TEMP=dante
+ENV DANTE_DEPS="build-essential curl"
 
 RUN set -xe \
     && apt-get update \
@@ -19,7 +19,7 @@ RUN set -xe \
     && mkdir $DANTE_TEMP \
         && cd $DANTE_TEMP \
         && curl -sSL $DANTE_URL -o $DANTE_FILE \
-        && echo "$DANTE_SHA *$DANTE_FILE" | shasum -c \
+        && echo "$DANTE_SHA1 *$DANTE_FILE" | sha1sum -c \
         && tar xzf $DANTE_FILE --strip 1 \
         && ./configure \
         && make install \
@@ -28,13 +28,12 @@ RUN set -xe \
     && apt-get purge -y --auto-remove $DANTE_DEPS \
     && rm -rf /var/lib/apt/lists/*
 
-ADD sockd.conf /etc/sockd.conf
+COPY data/sockd.conf /etc/dante/sockd.conf
 
-ENV CFGFILE /etc/sockd.conf
-ENV PIDFILE /tmp/sockd.pid
-ENV WORKERS 10
+ENV CFGFILE=/etc/dante/sockd.conf
+ENV PIDFILE=/run/sockd.pid
+ENV WORKERS=10
 
 EXPOSE 1080
 
 CMD sockd -f $CFGFILE -p $PIDFILE -N $WORKERS
-

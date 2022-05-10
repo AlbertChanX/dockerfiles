@@ -1,15 +1,12 @@
-hass:
-  image: vimagick/hass:debian
-  volumes:
-    - ./data:/etc/hass
-  net: host
-  privileged: yes
-  restart: unless-stopped
-
-hcfg:
-  image: vimagick/hcfg
-  volumes:
-    - ./data:/etc/hass
-  net: host
-  working_dir: /etc/hass
-  restart: unless-stopped
+version: "3.8"
+services:
+  hass:
+    container_name: hass
+    image: homeassistant/home-assistant:stable
+    volumes:
+      - ./data:/config
+      - /dev/bus/usb:/dev/bus/usb
+      - /var/run/dbus:/var/run/dbus
+    network_mode: host
+    privileged: true
+    restart: unless-stopped

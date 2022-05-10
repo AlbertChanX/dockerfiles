@@ -6,31 +6,55 @@ ghost
 ## docker-compose.yml
 
 ```yaml
-ghost:
-  image: ghost:alpine
-  ports:
-    - "127.0.0.1:2368:2368"
-  volumes:
-    - ./data:/var/lib/ghost/content
-    - ./data/config.json:/var/lib/ghost/config.production.json
-  restart: always
+version: "3.8"
+
+services:
+
+  ghost:
+    image: ghost:alpine
+    ports:
+      - "2368:2368"
+    volumes:
+      - ./data:/var/lib/ghost/content
+    environment:
+      - url=https://blog.easypi.duckdns.org
+      - database__client=sqlite3
+      - database__connection__filename=/var/lib/ghost/content/data/ghost.db
+    restart: unless-stopped
+
+  backup:
+    image: offen/docker-volume-backup
+    environment:
+      # AWS_BUCKET_NAME=backups
+      # AWS_S3_PATH=ghost
+      # AWS_ACCESS_KEY_ID=******
+      # AWS_SECRET_ACCESS_KEY=******
+      - BACKUP_FILENAME=backup-ghost-%Y-%m-%dT%H-%M-%S.tar.gz
+      - BACKUP_PRUNING_PREFIX=backup-ghost-
+      - BACKUP_LATEST_SYMLINK=backup-ghost-latest.tar.gz
+      - BACKUP_RETENTION_DAYS=30
+    volumes:
+      - ./data:/backup/ghost:ro
+      - ./backups:/archive
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - ghost
+    restart: unless-stopped
 ```
 
 ## Up and Running
 
 ```bash
-$ mkdir data
-$ cd data
-$ wget https://github.com/vimagick/dockerfiles/raw/master/ghost/data/config.json
-$ sed -i 's@http://localhost:2368@https://blog.easypi.pro@' config.js
 $ docker-compose up -d
+$ curl https://blog.easypi.duckdns.org/ghost/
+$ docker-compose exec backup backup
 ```
 
 ## Setup SSL
 
 > Read [this][2] to setup SSL.
 
-```
+```nginx
 server {
     listen 80 default;
     server_name _;
@@ -41,11 +65,11 @@ server {
 
 server {
     listen 443 ssl;
-    server_name easypi.pro blog.easypi.pro;
-    ssl_certificate ssl/easypi.pro.crt;
-    ssl_certificate_key ssl/easypi.pro.key;
+    server_name easypi.duckdns.org blog.easypi.duckdns.org;
+    ssl_certificate ssl/easypi.duckdns.org/fullchain.pem;
+    ssl_certificate_key ssl/easypi.duckdns.org/privkey.pem;
     location / {
-        if ($host = 'easypi.pro') {
+        if ($host = 'easypi.duckdns.org') {
             return 301 $scheme://blog.$host$request_uri;
         }
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -71,4 +95,4 @@ files without editing them.
 
 [1]: https://ghost.org/
 [2]: http://support.ghost.org/setup-ssl-self-hosted-ghost/
-[3]: https://blog.easypi.pro/ghost/settings/code-injection/
+[3]: https://blog.easypi.duckdns.org/ghost/settings/code-injection/

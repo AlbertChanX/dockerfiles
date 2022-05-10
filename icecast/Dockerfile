@@ -2,12 +2,16 @@
 # Dockerfile for icecast
 #
 
-FROM alpine
+FROM alpine:3
 
-MAINTAINER kev <noreply@easypi.pro>
+MAINTAINER EasyPi Software Foundation
 
-RUN apk add --no-cache icecast
+RUN set -xe \
+ && apk add --no-cache icecast \
+ && mkdir -p /etc/icecast \
+ && mv /etc/icecast.xml /etc/icecast \
+ && icecast --version
 
 EXPOSE 8000
 
-CMD ["icecast", "-c", "/etc/icecast.xml"]
+CMD ["icecast", "-c", "/etc/icecast/icecast.xml"]

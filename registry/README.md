@@ -6,39 +6,36 @@ registry
 ## docker-compose.yml
 
 ```yaml
-registry:
-  image: registry:2
-  ports:
-    - "5000:5000"
-  volumes:
-    - /etc/docker/registry
-    - ./data:/var/lib/registry
-    - ./certs:/certs
-    - ./auth:/auth
-  environment:
-    - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt
-    - REGISTRY_HTTP_TLS_KEY=/certs/domain.key
-    - REGISTRY_AUTH=htpasswd
-    - REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
-    - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
-  restart: always
+version: "3.8"
+services:
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    volumes:
+      - /etc/docker/registry
+      - ./data:/var/lib/registry
+      - ./certs:/certs
+      - ./auth:/auth
+    environment:
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt
+      - REGISTRY_HTTP_TLS_KEY=/certs/domain.key
+      - REGISTRY_AUTH=htpasswd
+      - REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
+      - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
+    restart: unless-stopped
 
-frontend:
-  image: konradkleine/docker-registry-frontend:v2
-  ports:
-    - "8080:80"
-    - "8443:443"
-  links:
-    - registry
-  volume:
-    - ./certs/domain.crt:/etc/apache2/domain.crt
-    - ./certs/domain.key:/etc/apache2/domain.key
-  environment:
-    - ENV_DOCKER_REGISTRY_HOST=registry
-    - ENV_DOCKER_REGISTRY_PORT=5000
-    - ENV_DOCKER_REGISTRY_USE_SSL=1
-    - ENV_USE_SSL=yes
-  restart: always
+  webui:
+    image: joxit/docker-registry-ui:2
+    ports:
+      - "5080:80"
+    environment:
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - REGISTRY_TITLE=EasyPi Docker Registry
+      - DELETE_IMAGES=true
+    depends_on:
+      - registry
+    restart: unless-stopped
 ```
 
 ## Server Setup
@@ -65,16 +62,16 @@ $ docker-compose restart
 ## Client Setup
 
 ```bash
-$ scp registry.easypi.info:fig/registry/certs/domain.crt \
-      /etc/docker/certs.d/registry.easypi.info:5000/ca.crt
+$ scp registry.easypi.pro:fig/registry/certs/domain.crt \
+      /etc/docker/certs.d/registry.easypi.pro:5000/ca.crt
 
 $ vim /etc/docker/daemon.json
 {
   "registry-mirrors": [
-    "https://registry.easypi.info:5000"
+    "https://registry.easypi.pro:5000"
   ],
   "insecure-registries": [
-    "registry.easypi.info"
+    "registry.easypi.pro"
   ],
   "log-driver": "json-file",
   "log-opts": {
@@ -87,17 +84,22 @@ $ systemctl reload docker
 $ docker info
 
 $ docker pull alpine
-$ docker tag alpine registry.easypi.info:5000/alpine
+$ docker tag alpine registry.easypi.pro:5000/alpine
 
-$ docker login -u username -p password easypi.info:5000
-$ docker push registry.easypi.info:5000/alpine
-$ docker rmi registry.easypi.info:5000/alpine
-$ docker pull registry.easypi.info:5000/alpine
+$ docker login -u username -p password easypi.pro:5000
+$ docker push registry.easypi.pro:5000/alpine
+$ docker rmi registry.easypi.pro:5000/alpine
+$ docker pull registry.easypi.pro:5000/alpine
 
-$ firefox http://registry.easypi.info:8080
+$ curl -k -u username:password https://registry.easypi.pro:5000/v2/_catalog
+$ curl -k -u username:password https://registry.easypi.pro:5000/v2/alpine/tags/list
 ```
 
 > :warning: Docker will connect [insecure-registries][2] via HTTPS first (ignore TLS error), then try HTTP.
+
+## Cleanup Outdated Images
+
+- https://github.com/vimagick/dockerfiles/tree/master/registry-cli
 
 ## Read More
 
@@ -105,6 +107,7 @@ $ firefox http://registry.easypi.info:8080
 - https://github.com/docker/distribution/blob/master/docs/insecure.md
 - https://serversforhackers.com/tcp-load-balancing-with-nginx-ssl-pass-thru
 - https://github.com/docker/distribution/blob/master/docs/recipes/mirror.md
+- https://docs.docker.com/registry/spec/api/
 
 [1]: https://github.com/docker/distribution
 [2]: https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry

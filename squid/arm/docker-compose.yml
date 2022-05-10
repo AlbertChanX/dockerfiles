@@ -1,13 +1,12 @@
-squid:
-  image: easypi/squid-arm
-  ports:
-    - "3128:3128"
-    - "3130:3130"
-  volumes:
-    - ./squid.conf:/etc/squid/squid.conf
-  net: host
-  ulimits:
-    nofile:
-      soft: 65535
-      hard: 65535
-  restart: always
+version: "3.8"
+services:
+  squid:
+    image: easypi/squid-arm
+    ports:
+      - "3128:3128/tcp"
+      - "3130:3130/udp"
+    volumes:
+      - ./data/cache:/var/cache/squid
+      - ./data/log:/var/log/squid
+    stop_signal: SIGKILL
+    restart: unless-stopped

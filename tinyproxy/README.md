@@ -6,11 +6,15 @@ tinyproxy
 ## docker-compose.yml
 
 ```yaml
-tinyproxy:
-  image: vimagick/tinyproxy
-  ports:
-    - "8888:8888"
-  restart: always
+version: "3.8"
+services:
+  tinyproxy:
+    image: vimagick/tinyproxy
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data:/etc/tinyproxy
+    restart: unless-stopped
 ```
 
 ## Server Setup

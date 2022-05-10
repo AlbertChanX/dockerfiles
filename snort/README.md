@@ -3,15 +3,16 @@ snort
 
 ![](https://badge.imagelayers.io/vimagick/snort:latest.svg)
 
-[`Snort`][1] is an open source intrusion prevention system capable of real-time
+[Snort][1] is an open source intrusion prevention system capable of real-time
 traffic analysis and packet logging.
 
 ```yaml
 snort:
   image: vimagick/snort
-  command: -q -c /etc/snort/snort.conf -A fast -y -i eth0
+  command: -q -c /etc/snort/snort.conf -y -i eth0
   volumes:
     - ./data/snort.conf:/etc/snort/snort.conf
+    - ./data/u2json.conf:/etc/snort/u2json.conf
     - ./data/rules:/etc/snort/rules
     - ./data/log:/var/log/snort
   cap_add:
@@ -29,15 +30,15 @@ alert icmp any any -> any any (msg:"ICMP Echo Reply"; itype:0; sid:10001;)
 ```bash
 $ docker-compose up -d
 
-$ tail -f data/log/alert
-snort_1  | 08/26/18-06:47:35.460754  [**] [1:10000:0] ICMP Echo Request [**] [Priority: 0] {ICMP} x.x.x.x -> y.y.y.y
-snort_1  | 08/26/18-06:47:35.460835  [**] [1:10001:0] ICMP Echo Reply [**] [Priority: 0] {ICMP} y.y.y.y -> x.x.x.x
+$ docker-compose exec snort idstools-u2json @/etc/snort/u2json.conf
+INFO: Loaded 523 rule message map entries.
+INFO: Loaded 38 classifications.
 
-$ tcpdump -n -r data/log/snort.log.xxx
-06:47:35.460754 IP x.x.x.x > y.y.y.y: ICMP echo request, id 17767, seq 933, length 12
-06:47:35.460835 IP y.y.y.y > x.x.x.x: ICMP echo reply, id 17767, seq 933, length 12
+$ tail -f data/log/alert.json
+{"type":"event","event":{"impact":0,"generator-id":1,"protocol":1,"dport-icode":0,"signature-revision":0,"classification-id":0,"signature-id":1000000,"sensor-id":0,"impact-flag":0,"sport-itype":8,"priority":0,"event-second":1591597954,"pad2":null,"destination-ip":"1.2.3.4","event-id":55,"mpls-label":null,"vlan-id":null,"source-ip":"5.6.7.8","event-microsecond":905105,"blocked":0}}
+{"type":"event","event":{"impact":0,"generator-id":1,"protocol":1,"dport-icode":0,"signature-revision":0,"classification-id":0,"signature-id":1000001,"sensor-id":0,"impact-flag":0,"sport-itype":0,"priority":0,"event-second":1591597954,"pad2":null,"destination-ip":"5.6.7.8","event-id":56,"mpls-label":null,"vlan-id":null,"source-ip":"1.2.3.4","event-microsecond":905126,"blocked":0}}
 
-$ while :; do inotifywait -q -e modify data/log/alert && play -q alert.wav; done
+$ while :; do inotifywait -q -e modify data/log/alert.json && play -q alert.wav; done
 ```
 
 [1]: https://snort.org/

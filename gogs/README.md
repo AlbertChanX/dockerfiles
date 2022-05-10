@@ -3,19 +3,6 @@ gogs
 
 [Gogs][1] (Go Git Service) is a painless self-hosted Git service.
 
-## docker-compose.yml
-
-```yaml
-gogs:
-  image: gogs/gogs
-  ports:
-    - "2222:22"
-    - "3000:3000"
-  volumes:
-    - ./data:/data
-  restart: always
-```
-
 ## up and running
 
 ```
@@ -38,4 +25,7 @@ $ tree -FL 3 ./data/git/
     └── user2/
 ```
 
+Please read [this][2] to learn more about `app.ini`.
+
 [1]: https://gogs.io/
+[2]: https://gogs.io/docs/advanced/configuration_cheat_sheet.html
